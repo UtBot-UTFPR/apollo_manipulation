@@ -4,17 +4,18 @@
 #include <geometry_msgs/Vector3.h>
 #include <custom_msg/status_arm.h>
 #include <custom_msg/set_angles.h>
+#include "3r_kinematics.hpp"
+
+// set_GAR: 120 ou 180
 
 // MENSAGENS RECEBIDAS
 geometry_msgs::Point 	msg_setPoint;
 
 // MENSAGENS PUBLICADAS
-custom_msg::set_angles msg_set_angles;
+custom_msg::set_angles  msg_set_angles;
 
 // FUNÇÕES
-void callback_setPoint		(const geometry_msgs::Point::ConstPtr&		msg);
-void moveHand();
-void inverseKinematics();
+void callback_setPoint(const geometry_msgs::Point::ConstPtr& msg);
 
 // FUNÇÃO MAIN
 int main(int argc, char **argv)
@@ -31,12 +32,15 @@ int main(int argc, char **argv)
 
 	// VARIÁVEIS DE TEMPO
 	ros::Rate loopRate(30);
+
+	// PONTO DESTINO
+	geometry_msgs::Point goal;
 	
 	// LOOP PRINCIPAL
 	while (ros::ok()) {
 		loopRate.sleep();
 		ros::spinOnce();
-		inverseKinematics();
+		inverseKinematics(&goal, &msg_set_angles);
 		pub_set_angles.publish(msg_set_angles);
 	}
 	
@@ -45,10 +49,5 @@ int main(int argc, char **argv)
 
 void callback_setPoint(const geometry_msgs::Point::ConstPtr& msg)
 {
-	msg_setPoint 	= *msg;
-}
-
-void inverseKinematics()
-{
-	//
+	msg_setPoint = *msg;
 }
