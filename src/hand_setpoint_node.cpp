@@ -28,19 +28,28 @@ int main(int argc, char **argv)
 	ros::Subscriber sub_setPoint	= n.subscribe("/arm/setpoint", 1, callback_setPoint);
 	
 	// PUBLISHERS
-	ros::Publisher pub_set_angles 	= n.advertise<custom_msg::set_angles>("/cmd_3R", 1000);
+	ros::Publisher pub_set_angles 	= n.advertise<custom_msg::set_angles>("/cmd_3R", 0);
 
 	// VARIÁVEIS DE TEMPO
 	ros::Rate loopRate(30);
 
+	const float length_OMB = 23.5;
+    const float length_COT = 24.5;
+	const float length_PUN = 6.5;
+
 	// PONTO DESTINO
 	geometry_msgs::Point goal;
+	goal.x = 48;
+	goal.y = 0;
 	
 	// LOOP PRINCIPAL
 	while (ros::ok()) {
 		loopRate.sleep();
 		ros::spinOnce();
-		inverseKinematics(&goal, &msg_set_angles);
+		inverseKinematics(&goal, &msg_set_angles, 
+			length_OMB, length_COT, length_PUN,
+			0, 0, 10);
+		// forwardKinematics(&goal, &msg_set_angles, length_OMB, length_COT, length_PUN);
 		pub_set_angles.publish(msg_set_angles);
 	}
 	
@@ -49,5 +58,5 @@ int main(int argc, char **argv)
 
 void callback_setPoint(const geometry_msgs::Point::ConstPtr& msg)
 {
-	msg_setPoint = *msg;
+	// msg_setPoint = *msg;
 }
