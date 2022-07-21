@@ -1,5 +1,4 @@
-# manipulator_controller_cpp
-Pacote que faz a cinematica inversa do braço
+# manipulator_controller_cpp: pacote que faz a cinematica inversa do braço
 
 # Nodos ROS
 - hand_setpoint_node: recebe um ponto espacial (pelo tópico /arm_setpoint) e ajusta o braço até ele
