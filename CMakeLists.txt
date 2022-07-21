@@ -210,3 +210,6 @@ include_directories(
 
 add_executable(hand_setpoint_node src/hand_setpoint_node.cpp)
 target_link_libraries(hand_setpoint_node ${catkin_LIBRARIES})
+
+add_executable(hand_setpoint_publisher_node src/hand_setpoint_publisher_node.cpp)
+target_link_libraries(hand_setpoint_publisher_node ${catkin_LIBRARIES})
