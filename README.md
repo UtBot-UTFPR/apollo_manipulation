@@ -19,4 +19,4 @@
   - colar o custom_msg na pasta do workspace/src (https://github.com/UtBot-UTFPR/custom_msg) 
 - clonar o manipulator_controller_cpp na pasta do workspace/src
 - rodar a launchfile exemplo
-  >> $ roslaunch manipulator_controller_cpp setpoint.launch 
+  > $ roslaunch manipulator_controller_cpp setpoint.launch 
