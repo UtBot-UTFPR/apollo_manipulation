@@ -14,11 +14,9 @@
   - correction_COT
   - correction_PUN
 
-## Pré-requisitos
-- custom_msg (colar na pasta do workspace/src) 
-  > https://github.com/UtBot-UTFPR/custom_msg
-
-## Como rodar
-- clonar o repositório na pasta do workspace/src
-- launchfile exemplo em launch/setpoint.launch
-  > $ roslaunch manipulator_controller_cpp setpoint.launch 
+## Como utilizar o pacote
+- Pré-requisitos
+  - colar o custom_msg na pasta do workspace/src (https://github.com/UtBot-UTFPR/custom_msg) 
+- clonar o manipulator_controller_cpp na pasta do workspace/src
+- rodar a launchfile exemplo
+  >> $ roslaunch manipulator_controller_cpp setpoint.launch 
