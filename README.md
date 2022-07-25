@@ -8,11 +8,11 @@
 - Comprimentos de cada parte do braço 
   -  length_OMB 
   -  length_COT
-  -  length_PUN)
+  -  length_PUN
 - Correções angulares para cada parte do braço
   - correction_OMB
   - correction_COT
-  - correction_PUN)
+  - correction_PUN
 
 ## Pré-requisitos
 - custom_msg (colar na pasta do workspace/src) 
