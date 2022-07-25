@@ -8,6 +8,11 @@
 - Comprimentos de cada parte do braço (length_OMB, length_COT, length_PUN)
 - Correções angulares para cada parte do braço (correction_OMB, correction_COT, correction_PUN)
 
+# Pré-requisitos
+- custom_msg (colar na pasta do workspace/src) 
+  > https://github.com/UtBot-UTFPR/custom_msg
+
 # Como rodar
+- clonar o repositório na pasta do workspace/src
 - launchfile exemplo em launch/setpoint.launch
   > $ roslaunch manipulator_controller_cpp setpoint.launch 
