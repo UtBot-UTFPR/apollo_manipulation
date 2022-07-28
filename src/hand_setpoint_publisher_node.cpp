@@ -32,11 +32,12 @@ int main(int argc, char **argv)
 			key = getchar();
 			if (key == ' ') {
 				ROS_INFO("Setting new goal point");
-				float x, y;
-				printf(" - [x] [y]: ");
-				scanf("%f %f", &x, &y);
+				float x, y, z;
+				printf(" - [x] [y] [z]: ");
+				scanf("%f %f, %f", &x, &y, &z);
 				msg_setPoint.x = x;
 				msg_setPoint.y = y;
+				msg_setPoint.z = z;
 				pub_setPoint.publish(msg_setPoint);
 			}
 		}

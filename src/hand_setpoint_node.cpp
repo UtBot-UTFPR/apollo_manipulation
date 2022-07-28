@@ -2,6 +2,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Vector3.h>
+#include <nav_msgs/Odometry.h>
 #include <custom_msg/status_arm.h>
 #include <custom_msg/set_angles.h>
 #include "3r_kinematics.hpp"
@@ -17,7 +18,7 @@ double correction_COT = 0.0;
 double correction_PUN = 10.0;
 
 // *** MENSAGENS RECEBIDAS ***
-geometry_msgs::Point 	msg_setPoint;
+geometry_msgs::Point msg_setPoint;
 bool newSetPoint = false;
 
 // *** MENSAGENS PUBLICADAS ***
@@ -45,8 +46,8 @@ int main(int argc, char **argv)
 	ROS_INFO("correction OMB, COT, PUN: %f, %f, %f", correction_OMB, correction_COT, correction_PUN);
 
 	// SUBSCRIBERS
-	ros::Subscriber sub_setPoint	= n.subscribe("/arm_setpoint", 1, callback_setPoint);
-	
+	ros::Subscriber sub_setPoint = n.subscribe("/arm_setpoint", 1, callback_setPoint);
+
 	// PUBLISHERS
 	ros::Publisher pub_set_angles 	= n.advertise<custom_msg::set_angles>("/cmd_3R", 0);
 
@@ -56,6 +57,7 @@ int main(int argc, char **argv)
 	// PONTO DESTINO
 	msg_setPoint.x = 24;
 	msg_setPoint.y = 0;
+	msg_setPoint.z = 0;
 	newSetPoint = true;
 	
 	// LOOP PRINCIPAL
@@ -63,8 +65,9 @@ int main(int argc, char **argv)
 		loopRate.sleep();
 		ros::spinOnce();
 		if (newSetPoint == true) {
-			ROS_INFO("Performing inverse kinematics...");
-			inverseKinematics(&msg_setPoint, &msg_set_angles, 
+			ROS_INFO("Correction in plane xz...");
+			xz_inverseKinematics(&msg_setPoint, &msg_set_angles,
+				0,
 				length_OMB, length_COT, length_PUN,
 				correction_OMB, correction_COT, correction_PUN);
 			newSetPoint = false;
