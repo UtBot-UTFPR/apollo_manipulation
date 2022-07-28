@@ -7,26 +7,12 @@
 #include <geometry_msgs/Quaternion.h>
 #include <tf/tf.h>
 #include <custom_msg/set_angles.h>
-
-#define degToRad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
-#define radToDeg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
+#include "calculations.hpp"
 
 /*
     VALORES DE TESTE
     - (x,y) = (39.101, 32.968) ---> OMB = 30, COT = 60, PUN = -90
 */
-
-double getYaw(geometry_msgs::Quaternion orientation)
-{
-    tf::Quaternion q(
-        orientation.x,
-        orientation.y,
-        orientation.z,
-        orientation.w);
-    double yaw = tf::getYaw(q);
-    ROS_INFO("yaw %f", yaw);
-    return yaw;
-}
 
 void xz_forwardKinematics(geometry_msgs::Point* goal, custom_msg::set_angles* msg_set_angles,
     const float length_OMB, const float length_COT, const float length_PUN)
@@ -89,9 +75,14 @@ void xz_inverseKinematics(
         - theta2: set_COT
         - theta3: set_PUN
     */
-    double theta1 = delta - alpha;
-    double theta2 = M_PI - beta;
+    double theta1 = radToDeg(delta - alpha);
+    double theta2 = radToDeg(M_PI - beta);
     double theta3 = - (theta1 + theta2) + degToRad(theta_p);
+
+    ROS_INFO(" - goal       (%f, %f, %f)",                  goal->x , goal->y, goal->z);
+    ROS_INFO(" - v          %f",                            v);
+    ROS_INFO(" - offsetGoal (%f, %f, %f)",                  offsetGoal.x , offsetGoal.y, offsetGoal.z);
+    ROS_INFO(" - theta1, theta2, theta3: %f, %f, %f\n\n",   theta1, theta2, theta3);
 
     // Safeguards (prevenir resultados perigosos)
     if (v > 54.5 || v < 9.0)
@@ -103,66 +94,11 @@ void xz_inverseKinematics(
     if (theta3 > 360 || theta3 < -360)
         return;
 
-    msg_set_angles->set_OMB = radToDeg(theta1) + correction_OMB;
-    msg_set_angles->set_COT = radToDeg(theta2) + correction_COT;
-    msg_set_angles->set_PUN = radToDeg(theta3) + correction_PUN;
+    ROS_INFO("Changing set_angles");
 
-    ROS_INFO(" - goal       (%f, %f, %f)", goal->x , goal->y, goal->z);
-    ROS_INFO(" - offsetGoal (%f, %f, %f)", offsetGoal.x , offsetGoal.y, offsetGoal.z);
-    ROS_INFO(" - theta1, theta2, theta3 (deg): %f, %f, %f\n\n", radToDeg(theta1), radToDeg(theta2), radToDeg(theta3));
-}
-
-/* Cinemática inversa no plano xy (ajuste de yaw)
-    - Kp: constante de proporcionalidade do PID
-    - yaw_max_error: erro angular máximo, abaixo do qual a orientação está "certa"*/
-void xy_inverseKinematics(
-    geometry_msgs::Point* goal, geometry_msgs::Twist* msg_cmd_vel,
-    ros::Publisher* pub_cmd_vel,
-    nav_msgs::Odometry* msg_odom, ros::Rate* loopRate, 
-    const double Kp, const double yaw_max_error)
-{
-    // Yaw absoluto, inicialmente: 
-    double yaw_start_absolute = radToDeg(getYaw(msg_odom->pose.pose.orientation));
-    ROS_INFO("orientation %f %f %f %f",   msg_odom->pose.pose.orientation.w, msg_odom->pose.pose.orientation.x, msg_odom->pose.pose.orientation.y, msg_odom->pose.pose.orientation.z);
-
-    // Quanto precisa girar:
-    double yaw_target_relative = radToDeg(atan2(goal->x, goal->y)) - yaw_start_absolute;
-    
-    // Yaw atual, relativo ao yaw_start:
-    double yaw_current_relative = 0.0;
-
-    // Erro de orientação:
-    double yaw_error = yaw_target_relative - yaw_current_relative;
-
-    while (/*yaw_error < yaw_max_error &&*/ ros::ok()) {
-        loopRate->sleep();
-		ros::spinOnce();
-
-        // Determina o yaw atual, em relação ao yaw_start:
-        yaw_current_relative = radToDeg(getYaw(msg_odom->pose.pose.orientation)) - yaw_start_absolute;
-
-        // Erro de yaw é quanto falta pro yaw atual chegar no target:
-        yaw_error = yaw_target_relative - yaw_current_relative;
-
-        // Output do sistema é um comando de velocidade de rotação:
-        msg_cmd_vel->linear.x = 0.0;
-        msg_cmd_vel->linear.y = 0.0;
-        msg_cmd_vel->linear.z = 0.0;
-        msg_cmd_vel->angular.x = 0.0;
-        msg_cmd_vel->angular.y = 0.0;
-        msg_cmd_vel->angular.z = Kp * yaw_error;
-
-        // Publica a mensagagem
-        // pub_cmd_vel->publish(*msg_cmd_vel);
-
-        // ROS_INFO("yaw_start_absolute %f",   yaw_start_absolute);
-        // ROS_INFO("yaw_target_relative %f",  yaw_target_relative);
-        // ROS_INFO("yaw_current_relative %f", yaw_current_relative);
-        // ROS_INFO("yaw_error %f",            yaw_error);
-        // ROS_INFO("yaw_max_error %f",        yaw_max_error);
-        // ROS_INFO("w_z %f",                  msg_cmd_vel->angular.z);
-        // ROS_INFO("Kp %f",                   Kp);
-    }
+    msg_set_angles->set_OMB = theta1 + correction_OMB;
+    msg_set_angles->set_COT = theta2 + correction_COT;
+    msg_set_angles->set_PUN = theta3 + correction_PUN;
 }
 
 #endif

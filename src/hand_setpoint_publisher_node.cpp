@@ -20,9 +20,12 @@ int main(int argc, char **argv)
 	ros::Publisher pub_setPoint	= n.advertise<geometry_msgs::Point>("/arm_setpoint", 0);
 
 	char key = '0';
+	msg_setPoint.x = 0;
+	msg_setPoint.y = 0;
+	msg_setPoint.z = 0;
 
 	puts("\n");
-	ROS_INFO("press [SPACE] to set new goal point\n");
+	ROS_INFO("press [P] to set new goal point\n");
 	
 	// LOOP PRINCIPAL
 	while (ros::ok()) {
@@ -30,10 +33,9 @@ int main(int argc, char **argv)
 		ros::spinOnce();
 		if (kbhit()) {
 			key = getchar();
-			if (key == ' ') {
-				ROS_INFO("Setting new goal point");
+			if (key == 'P' || key == 'p') {
+				ROS_INFO("Type [x] [y] [z]:");
 				float x, y, z;
-				printf(" - [x] [y] [z]: ");
 				scanf("%f %f, %f", &x, &y, &z);
 				msg_setPoint.x = x;
 				msg_setPoint.y = y;

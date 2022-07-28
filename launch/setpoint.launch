@@ -16,4 +16,12 @@
         output="screen">
     </node>
 
+    <!-- <node 
+        name="body_setpoint_node"
+        pkg="manipulator_controller_cpp" 
+        type="body_setpoint_node" 
+        respawn="true"
+        output="screen">
+    </node> -->
+
 </launch>

@@ -55,24 +55,34 @@ int main(int argc, char **argv)
 	ros::Rate loopRate(30);
 
 	// PONTO DESTINO
-	msg_setPoint.x = 24;
+	msg_setPoint.x = 0;
 	msg_setPoint.y = 0;
 	msg_setPoint.z = 0;
+	
 	newSetPoint = true;
 	
 	// LOOP PRINCIPAL
 	while (ros::ok()) {
+
 		loopRate.sleep();
 		ros::spinOnce();
-		if (newSetPoint == true) {
+		
+		// Se setPoint for (0, 0, 0), pula a iteração
+		if (msg_setPoint.x == 0 && msg_setPoint.y == 0 && msg_setPoint.z == 0)
+			continue;
+		
+		// Se tiver novo setPoint, ajusta braço
+		else if (newSetPoint == true) {
 			ROS_INFO("Correction in plane xz...");
 			xz_inverseKinematics(&msg_setPoint, &msg_set_angles,
 				0,
 				length_OMB, length_COT, length_PUN,
 				correction_OMB, correction_COT, correction_PUN);
+			ros::Time::sleepUntil(ros::Time(500));
+			msg_set_angles.set_GAR = 180.0;
 			newSetPoint = false;
+			pub_set_angles.publish(msg_set_angles);
 		}
-		pub_set_angles.publish(msg_set_angles);
 	}
 	return 0;
 }
