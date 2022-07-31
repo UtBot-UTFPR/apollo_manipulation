@@ -208,11 +208,11 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(hand_setpoint_node src/hand_setpoint_node.cpp)
-target_link_libraries(hand_setpoint_node ${catkin_LIBRARIES})
+add_executable(setpoint_publisher_node src/setpoint_publisher_node.cpp)
+target_link_libraries(setpoint_publisher_node ${catkin_LIBRARIES})
 
-add_executable(hand_setpoint_publisher_node src/hand_setpoint_publisher_node.cpp)
-target_link_libraries(hand_setpoint_publisher_node ${catkin_LIBRARIES})
+add_executable(xz_controller_node src/xz_controller_node.cpp)
+target_link_libraries(xz_controller_node ${catkin_LIBRARIES})
 
-add_executable(body_setpoint_node src/body_setpoint_node.cpp)
-target_link_libraries(body_setpoint_node ${catkin_LIBRARIES})
+add_executable(xy_controller_node src/xy_controller_node.cpp)
+target_link_libraries(xy_controller_node ${catkin_LIBRARIES})
