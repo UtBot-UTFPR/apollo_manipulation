@@ -7,7 +7,7 @@
 	- booleano canMoveHand
 
     VALORES DE TESTE
-    - (x,y) = (39.101, 32.968) ---> OMB = 30, COT = 60, PUN = -90
+    - (x,z) = (39.101, 32.968) ---> OMB = 30, COT = 60, PUN = -90
 */
 
 #include <stdio.h>
@@ -18,8 +18,6 @@
 #include <custom_msg/status_arm.h>
 #include <custom_msg/set_angles.h>
 #include "calculations.hpp"
-
-////// TEST
 
 // *** MENSAGENS RECEBIDAS ***
 geometry_msgs::Point msg_setPoint;
@@ -99,7 +97,7 @@ int main(int argc, char **argv)
 		else if (newSetPoint == true) {
 			ROS_INFO("Correction in plane xz...");
 			xz_inverseKinematics(&msg_setPoint, &msg_set_angles,
-				0,
+				0.0,
 				length_OMB, length_COT, length_PUN,
 				correction_OMB, correction_COT, correction_PUN);
 			ros::Time::sleepUntil(ros::Time(500));
@@ -180,7 +178,7 @@ void xz_inverseKinematics(
     */
     double theta1 = radToDeg(delta - alpha);
     double theta2 = radToDeg(M_PI - beta);
-    double theta3 = - (theta1 + theta2) + degToRad(theta_p);
+    double theta3 = - (theta1 + theta2) + theta_p;
 
     ROS_INFO(" - goal       (%f, %f, %f)",                  goal->x , goal->y, goal->z);
     ROS_INFO(" - v          %f",                            v);
@@ -188,17 +186,15 @@ void xz_inverseKinematics(
     ROS_INFO(" - theta1, theta2, theta3: %f, %f, %f\n\n",   theta1, theta2, theta3);
 
     // Safeguards (prevenir resultados perigosos)
-    if (v > 54.5 || v < 9.0)
+    if (v > 54.5     || v < 9.0         ||
+        theta1 > 90  || theta1 < -45    ||
+        theta2 > 150 || theta1 < -150   ||
+        theta3 > 360 || theta3 < -360) {
+        ROS_INFO("SAFEGUARD!");
         return;
-    if (theta1 > 90 || theta1 < -45)
-        return;
-    if (theta2 > 150 || theta1 < -150)
-        return;
-    if (theta3 > 360 || theta3 < -360)
-        return;
+    }
 
     ROS_INFO("Changing set_angles!");
-
     msg_set_angles->set_OMB = theta1 + correction_OMB;
     msg_set_angles->set_COT = theta2 + correction_COT;
     msg_set_angles->set_PUN = theta3 + correction_PUN;

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 			if (key == 'P' || key == 'p') {
 				ROS_INFO("Type [x] [y] [z]:");
 				float x, y, z;
-				scanf("%f %f, %f", &x, &y, &z);
+				scanf("%f %f %f", &x, &y, &z);
 				msg_setPoint.x = x;
 				msg_setPoint.y = y;
 				msg_setPoint.z = z;
