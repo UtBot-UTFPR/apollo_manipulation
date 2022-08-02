@@ -19,6 +19,8 @@
 #include <custom_msg/set_angles.h>
 #include "calculations.hpp"
 
+////// TEST
+
 // *** MENSAGENS RECEBIDAS ***
 geometry_msgs::Point msg_setPoint;
 bool newSetPoint = false;
