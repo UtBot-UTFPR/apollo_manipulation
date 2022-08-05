@@ -11,4 +11,4 @@ correction_PUN: 10.0
 yaw_acceptable_error: 6.0 # Erro angular aceitável (graus)
 Kp: 0.299 # Constante de proporção do PID do yaw do robô
 
-debug: true # Mostrar ou não logs de debug
+debug: false # Mostrar ou não logs de debug
