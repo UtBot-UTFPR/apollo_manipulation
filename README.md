@@ -1,4 +1,4 @@
-# manipulator_controller_cpp: pacote que faz a cinematica inversa do braço
+- # manipulator_controller_cpp: pacote que faz a cinematica inversa do braço
 
   - ## Nodos ROS
     - xz_controller_node: recebe uma mensagem Point pelo tópico /arm_setpoint e publica ângulos do braço pra chegar nesse ponto (ajustes no plano xz)
