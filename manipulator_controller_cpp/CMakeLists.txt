@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES manipulator_controller_cpp
+#  LIBRARIES manipulator_controller_cpp 
 #  CATKIN_DEPENDS custom_msg geometry_msgs roscpp rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
@@ -208,11 +208,30 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
+# add_message_files(
+#       FILES
+#       set_angles.msg
+#     )
+
+# #Add to message generator
+#  generate_messages(
+#    DEPENDENCIES
+#    std_msgs
+#  )
+
+# #Add message_runtime
+# catkin_package(
+#      CATKIN_DEPENDS roscpp std_msgs message_runtime
+# )
+
 add_executable(setpoint_publisher_node src/setpoint_publisher_node.cpp)
+add_dependencies(setpoint_publisher_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(setpoint_publisher_node ${catkin_LIBRARIES})
 
 add_executable(xz_controller_node src/xz_controller_node.cpp)
+add_dependencies(xz_controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(xz_controller_node ${catkin_LIBRARIES})
 
 add_executable(xy_controller_node src/xy_controller_node.cpp)
+add_dependencies(xy_controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(xy_controller_node ${catkin_LIBRARIES})
