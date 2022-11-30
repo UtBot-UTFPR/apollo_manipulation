@@ -1,0 +1,8 @@
+prefix=/home/dieisson/3R_Manipulator_OpenPose/install
+
+Name: 3r_manipulator_openpose
+Description: Description of 3r_manipulator_openpose
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,2 @@
+3r_manipulator_openpose:custom_msg
+-DCATKIN_DEVEL_PREFIX=/home/dieisson/3R_Manipulator_OpenPose/devel -DCMAKE_INSTALL_PREFIX=/home/dieisson/3R_Manipulator_OpenPose/install -G Unix Makefiles
