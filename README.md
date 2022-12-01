@@ -20,7 +20,7 @@
 
   - ## Parâmetros (config/parameters.yaml)
     - Comprimentos de cada parte do braço
-      ``` 
+      ```
       length_OMB 
       length_COT
       length_PUN
@@ -47,9 +47,18 @@
 
   - ## Como utilizar o pacote
     - Pré-requisitos
-      - colar o custom_msg na pasta do workspace/src (https://github.com/UtBot-UTFPR/custom_msg) 
-    - clonar o manipulator_controller_cpp na pasta do workspace/src
-    - rodar as launchfiles:
-      - ```$ roslaunch manipulator_controller_cpp setpoint_xy.launch```
-      - ```$ roslaunch manipulator_controller_cpp setpoint_xz.launch```
-      - ```$ roslaunch manipulator_controller_cpp setpoint_xyz.launch```
+      ```bash
+      cd catkin_ws/src
+      # Clonar o custom_msg
+      git clone https://github.com/UtBot-UTFPR/custom_msg
+      # Clonar a stack de manipulação
+      git clone https://github.com/UtBotsAtHome-UTFPR/utbots_manipulation.git
+      cd ..
+      catkin_make
+      ```
+    - Rodar as launchfiles:
+      ```bash
+      roslaunch manipulator_controller_cpp setpoint_xy.launch
+      roslaunch manipulator_controller_cpp setpoint_xz.launch
+      roslaunch manipulator_controller_cpp setpoint_xyz.launch
+      ```
