@@ -1,14 +1,22 @@
 - # manipulator_controller_cpp: pacote que faz a cinematica inversa do braço
 
   - ## Nodos ROS
-    - xz_controller_node: recebe uma mensagem Point pelo tópico /arm_setpoint e publica ângulos do braço pra chegar nesse ponto (ajustes no plano xz)
-    - xy_controller_node: recebe uma mensagem Point pelo tópico /arm_setpoint e publica comando de velocidade pro robô girar em torno do eixo z/yaw (ajustes no plano xy)
-    - setpoint_publisher_node: publica uma mensagem Point no tópico /arm_setpoint. Pode definir um novo ponto ao apertar espaço
+    - xz_controller_node: 
+      - Recebe: mensagem Point
+      - Publica: ângulos do braço pra chegar nesse ponto (no plano xz)
+    - xy_controller_node: 
+      - Recebe: mensagem Point
+      - Publica: comando de velocidade pro robô girar em torno do eixo z (yaw - ajustes no plano xy)
+    - setpoint_publisher_node: 
+      - Publica: mensagem Point (pode definir um novo ponto ao apertar espaço)
     
   - ## Definições
+    ```
     - OMB: ombro
     - COT: cotovelo
     - PUN: punho
+    - GAR: garra
+    ```
 
   - ## Parâmetros (config/parameters.yaml)
     - Comprimentos de cada parte do braço 
