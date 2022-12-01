@@ -46,7 +46,7 @@
       ```
 
   - ## Como utilizar o pacote
-    - Pré-requisitos
+    - Pré-requisitos (clonar repositórios e compilar)
       ```bash
       cd catkin_ws/src
       # Clonar o custom_msg
@@ -56,7 +56,7 @@
       cd ..
       catkin_make
       ```
-    - Rodar as launchfiles:
+    - Rodar as launchfiles
       ```bash
       roslaunch manipulator_controller_cpp setpoint_xy.launch
       roslaunch manipulator_controller_cpp setpoint_xz.launch
