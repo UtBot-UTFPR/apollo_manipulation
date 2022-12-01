@@ -60,5 +60,5 @@
       ```bash
       roslaunch manipulator_controller_cpp setpoint_xy.launch # apenas para xy
       roslaunch manipulator_controller_cpp setpoint_xz.launch # apenas para xz
-      roslaunch manipulator_controller_cpp setpoint_xyz.launch # liga os 2 pacotes (xy e xz)
+      roslaunch manipulator_controller_cpp setpoint_xyz.launch # executa os 2 pacotes (xy e xz)
       ```
