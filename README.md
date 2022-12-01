@@ -12,10 +12,10 @@
     
   - ## Definições
     ```
-    - OMB: ombro
-    - COT: cotovelo
-    - PUN: punho
-    - GAR: garra
+    OMB: ombro
+    COT: cotovelo
+    PUN: punho
+    GAR: garra
     ```
 
   - ## Parâmetros (config/parameters.yaml)
