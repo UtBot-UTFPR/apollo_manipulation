@@ -31,9 +31,19 @@
       correction_COT
       correction_PUN
       ```
-    - yaw_acceptable_error (determina um ângulo aceitável para a rotação do robô)
-    - Kp (constante de proporcionalidade do PID da rotação do robô)
-    - debug (se true, vai mostrar mais detalhes no log)
+      
+    - Determina um ângulo aceitável para o ajuste angular em torno do eixo z
+      ```
+      yaw_acceptable_error
+      ```
+    - Constante de proporcionalidade do PID do ajuste angular em torno do eixo z
+      ```
+      Kp
+      ```
+    - Se true, vai mostrar mais detalhes no log
+      ```
+      debug
+      ```
 
   - ## Como utilizar o pacote
     - Pré-requisitos
