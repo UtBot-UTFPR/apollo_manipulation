@@ -19,7 +19,6 @@
 #include <custom_msg/set_angles.h>
 #include <custom_msg/status_arm.h>
 #include <custom_msg/reset_COT.h>
-#include <std_msgs/Int32.h>
 
 //Definições para manipular os motores mais facilmente.
 #define PARAR               0
@@ -123,9 +122,6 @@ ros::Subscriber<custom_msg::reset_COT> sub_reset_COT("/reset_COT", &Callback_res
 custom_msg::status_arm pub_msg_PUN;
 ros::Publisher pub_PUN("/status_PUN", &pub_msg_PUN);
 
-std_msgs::Int32 pub_msg_time;
-ros::Publisher pub_time("/arm/time", &pub_msg_time);
-
 //Publicador no tópico /status_GAR, onde se publica a situação da GARRA.
 custom_msg::status_arm pub_msg_GAR;
 ros::Publisher pub_GAR("/status_GAR", &pub_msg_GAR);
@@ -171,13 +167,7 @@ void setup()
   //Pinos que mandam o PWM são saídas.
   pinMode(PIN_PWM_PUN, OUTPUT);
   //pinMode(PIN_PWM_GAR, OUTPUT);
-
-  // pinMode(42, OUTPUT);
-  // digitalWrite(42, HIGH);
-
-  myservo.attach(42); //
-  myservo.write(120);
-  
+  myservo.attach(5); //
   //Pinos que habilitam o uso dos motores são saídas e devem estar com nível lógico alto.
   pinMode(EN_PUN, OUTPUT);
   pinMode(EN_GAR, OUTPUT);
@@ -204,19 +194,11 @@ void setup()
   nh.subscribe(sub_reset_COT);        //Subscreve-se no tópico, conforme "sub_reset_COT".
   nh.advertise(pub_PUN);              //Passa a publicar no tópico, conforme "pub_PUN".
   nh.advertise(pub_GAR);              //Passa a publicar no tópico, conforme "pub_GAR".
-  nh.advertise(pub_time);
-  // Serial.println("Ok");
 }
 
 void loop()
 { 
-  delay(50);
-  // Serial.println("Looping");
-
   nh.spinOnce();
-
-  pub_msg_time.data = millis();  
-  pub_time.publish(&pub_msg_time);
 
   //Publica as informações sobre o PUNHO.
   pub_msg_PUN.junta = "PUNHO";
@@ -282,9 +264,9 @@ void loop()
     
           //Verifica para qual lado tem que girar. Se o output é positivo, gira no sentido horário.
           if (erro_PUN > 0){
-            // motorGo(MOTOR_PUN, HOR, output_PUN);
+            motorGo(MOTOR_PUN, HOR, output_PUN);
           }else{
-            // motorGo(MOTOR_PUN, ANTHOR, output_PUN);
+            motorGo(MOTOR_PUN, ANTHOR, output_PUN);
           }
         }else{
 
@@ -295,7 +277,7 @@ void loop()
           
           //Se dentro da tolerância, mantém parado e marca a flag de tarefa concluída.
           //motorGo(MOTOR_PUN, PARAR, 0);
-          // motorGo(MOTOR_PUN, ANTHOR, 25);
+          motorGo(MOTOR_PUN, ANTHOR, 25);
           //output_PUN = 0;
           //working_PUN = false;
           //retries_PUN = 0;
@@ -372,8 +354,8 @@ void Callback(const custom_msg::set_angles & rec_msg) {
   RETRY = rec_msg.retry;
 
   if(EMERGENCY_STOP){
-    // motorGo(MOTOR_PUN, PARAR, 0);
-    // motorGo(MOTOR_GAR, PARAR, 0);
+    motorGo(MOTOR_PUN, PARAR, 0);
+    motorGo(MOTOR_GAR, PARAR, 0);
   }
 
   if(RESET)
@@ -384,7 +366,7 @@ void Callback(const custom_msg::set_angles & rec_msg) {
 }
 
 void Callback_reset_COT(const custom_msg::reset_COT & rec_msg_reset_COT){
-  reset_COT = rec_msg_reset_COT.reset_COT;
+  reset_COT = rec_msg_reset_COT.reset_COT1;
 }
 
 //Função que comanda direção e velocidade dos motores.
@@ -473,13 +455,13 @@ void reset_PUNGAR() {
   setpoint_PUN = DEG2PUL_PUN;
   
   while(RESET_PUN){
-    // motorGo(MOTOR_PUN, HOR, PWM_MAX);
+    motorGo(MOTOR_PUN, HOR, PWM_MAX);
     
     //Bloco para finalizar o RESET do PUNHO.
     pulse_timout_PUN = millis() - start_PUN;
     if(pulse_timout_PUN >= time_to_stop){
       
-      // motorGo(MOTOR_PUN, PARAR, 0);
+      motorGo(MOTOR_PUN, PARAR, 0);
       
       enc_PUN =              0;
       erro_PUN =             0;
