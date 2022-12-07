@@ -235,3 +235,7 @@ target_link_libraries(xz_controller_node ${catkin_LIBRARIES})
 add_executable(xy_controller_node src/xy_controller_node.cpp)
 add_dependencies(xy_controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(xy_controller_node ${catkin_LIBRARIES})
+
+add_executable(claw_controller_node src/claw_controller_node.cpp)
+add_dependencies(claw_controller_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(claw_controller_node ${catkin_LIBRARIES})

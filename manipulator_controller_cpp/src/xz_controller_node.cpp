@@ -32,13 +32,14 @@ void xz_forwardKinematics(geometry_msgs::Point* goal, custom_msg::set_angles* ms
     const float length_OMB, const float length_COT, const float length_PUN);
 void xz_inverseKinematics(
     geometry_msgs::Point* goal, custom_msg::set_angles* msg_set_angles,
-    const double theta_p,
+    bool skoop,
     const double length_OMB, const double length_COT, const double length_PUN,
     const double correction_OMB, const double correction_COT, const double correction_PUN);
 
 // *** MAIN ***
 int main(int argc, char **argv)
 {
+
 	// INICIALIZAÇÃO DO NODO
 	ros::init(argc, argv, "xz_controller");
 	ros::NodeHandle n;
@@ -51,6 +52,7 @@ int main(int argc, char **argv)
 	double correction_COT = 0.0;
 	double correction_PUN = 5.0;
 	bool   debug          = false; // Habilita log de debug
+    bool   incline        = true;            //   define o uso de scoop ou grab, mediante visao
 
 	n.getParam("/xz_controller_node/length_OMB", length_OMB);
 	n.getParam("/xz_controller_node/length_COT", length_COT);
@@ -97,13 +99,15 @@ int main(int argc, char **argv)
 		else if (newSetPoint == true) {
 			ROS_INFO("Correction in plane xz...");
 			xz_inverseKinematics(&msg_setPoint, &msg_set_angles,
-				0.0,
+				incline,
 				length_OMB, length_COT, length_PUN,
 				correction_OMB, correction_COT, correction_PUN);
-			ros::Time::sleepUntil(ros::Time(500));
-			msg_set_angles.set_GAR = 180.0;
 			newSetPoint = false;
 			pub_set_angles.publish(msg_set_angles);
+            ros::Time::sleepUntil(ros::Time(500));
+            ROS_INFO("Closing gripper!");
+			msg_set_angles.set_GAR = 180.0;
+            pub_set_angles.publish(msg_set_angles);
 		}
 	}
 	return 0;
@@ -131,13 +135,24 @@ void xz_forwardKinematics(geometry_msgs::Point* goal, custom_msg::set_angles* ms
     return;
 }
 
+
+
+
+//////////////////////////////////////////////////////////////////
+
 /* Cinemática inversa no plano xz */
 void xz_inverseKinematics(
     geometry_msgs::Point* goal, custom_msg::set_angles* msg_set_angles,
-    const double theta_p,
+    bool skoop,
     const double length_OMB, const double length_COT, const double length_PUN,
     const double correction_OMB, const double correction_COT, const double correction_PUN)
 {
+    double theta_p = 0;
+    if (skoop == true)
+        theta_p = -90;
+    else
+        theta_p = 0;
+
     // 'offsetgoal' é o ponto final de omb e cot (sem punho)
     geometry_msgs::Point offsetGoal;
     offsetGoal.x = goal->x - length_PUN * cos(degToRad(theta_p));
@@ -199,3 +214,75 @@ void xz_inverseKinematics(
     msg_set_angles->set_COT = theta2 + correction_COT;
     msg_set_angles->set_PUN = theta3 + correction_PUN;
 }
+
+
+
+
+
+// void xz_inverseKinematics(
+//     geometry_msgs::Point* goal, custom_msg::set_angles* msg_set_angles,
+//     const double theta_p,
+//     const double length_OMB, const double length_COT, const double length_PUN,
+//     const double correction_OMB, const double correction_COT, const double correction_PUN)
+// {
+//     // 'offsetgoal' é o ponto final de omb e cot (sem punho)
+//     geometry_msgs::Point offsetGoal;
+//     offsetGoal.x = goal->x - length_PUN * cos(degToRad(theta_p));
+//     offsetGoal.y = goal->y;
+//     offsetGoal.z = goal->z - length_PUN * sin(degToRad(theta_p));
+
+//     // 'o' é o módulo do vetor omb
+//     double o = length_OMB;
+
+//     // 'c' é o módulo do vetor cot
+//     double c = length_COT;
+
+//     // 'v' é o módulo do vetor resultante entre omb e cot 
+//     double v = sqrt(pow(offsetGoal.x, 2) + pow(offsetGoal.z, 2));
+
+//     /* 'delta' é o ângulo do triângulo retângulo: 
+//         - cateto oposto: 'offsetGoal.z'
+//         - hipotenusa:    'v'
+//     */ 
+//     double delta = asin(offsetGoal.z/v);
+
+//     /* 'alpha' é um ângulo obtido por lei dos cossenos
+//         - lado oposto a 'alpha': 'c'
+//         - outros 2 lados: 'v' e 'o'
+//     */
+//     double alpha = acos((pow(v,2)+pow(o,2)-pow(c,2))/(2*v*o));
+
+//     /* 'beta' é um ângulo obtido por lei dos cossenos
+//         - lado oposto a 'beta': 'v'
+//         - outros 2 lados: 'c' e 'o'
+//     */
+//     double beta = acos((pow(o,2)+pow(c,2)-pow(v,2))/(2*c*o));
+
+//     /* 'theta1', 'theta2' e 'theta3' são os ângulos do braço SEM CORREÇÃO
+//         - theta1: set_OMB
+//         - theta2: set_COT
+//         - theta3: set_PUN
+//     */
+//     double theta1 = radToDeg(delta - alpha);
+//     double theta2 = radToDeg(M_PI - beta);
+//     double theta3 = - (theta1 + theta2) + theta_p;
+
+//     ROS_INFO(" - goal       (%f, %f, %f)",                  goal->x , goal->y, goal->z);
+//     ROS_INFO(" - v          %f",                            v);
+//     ROS_INFO(" - offsetGoal (%f, %f, %f)",                  offsetGoal.x , offsetGoal.y, offsetGoal.z);
+//     ROS_INFO(" - theta1, theta2, theta3: %f, %f, %f\n\n",   theta1, theta2, theta3);
+
+//     // Safeguards (prevenir resultados perigosos)
+//     if (v > 54.5     || v < 9.0         ||
+//         theta1 > 90  || theta1 < -45    ||
+//         theta2 > 150 || theta1 < -150   ||
+//         theta3 > 360 || theta3 < -360) {
+//         ROS_INFO("SAFEGUARD!");
+//         return;
+//     }
+
+//     ROS_INFO("Changing set_angles!");
+//     msg_set_angles->set_OMB = theta1 + correction_OMB;
+//     msg_set_angles->set_COT = theta2 + correction_COT;
+//     msg_set_angles->set_PUN = theta3 + correction_PUN;
+// }
