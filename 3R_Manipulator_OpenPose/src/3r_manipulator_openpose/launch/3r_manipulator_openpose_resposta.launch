@@ -1,3 +1,0 @@
-<launch>
-    <node pkg="3r_manipulator_openpose" type="3r_manipulator_openpose_resposta.py" name="3r_manipulator_openpose_resposta" output="screen"></node>
-</launch>
