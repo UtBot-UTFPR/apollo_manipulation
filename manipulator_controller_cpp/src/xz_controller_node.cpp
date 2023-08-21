@@ -51,8 +51,8 @@ int main(int argc, char **argv)
 	double correction_OMB = 0.0;
 	double correction_COT = 0.0;
 	double correction_PUN = 5.0;
-	bool   debug          = false; // Habilita log de debug
-    bool   incline        = true;            //   define o uso de scoop ou grab, mediante visao
+	bool   debug          = false;  // Habilita log de debug
+    bool   incline        = true;   // Define o uso de scoop ou grab, mediante visão
 
 	n.getParam("/xz_controller_node/length_OMB", length_OMB);
 	n.getParam("/xz_controller_node/length_COT", length_COT);
@@ -87,7 +87,6 @@ int main(int argc, char **argv)
 	
 	// LOOP PRINCIPAL
 	while (ros::ok()) {
-
 		loopRate.sleep();
 		ros::spinOnce();
 		
@@ -134,9 +133,6 @@ void xz_forwardKinematics(geometry_msgs::Point* goal, custom_msg::set_angles* ms
     ROS_INFO("Forward kin.: xf %f, z %f", xf, z);
     return;
 }
-
-
-
 
 //////////////////////////////////////////////////////////////////
 

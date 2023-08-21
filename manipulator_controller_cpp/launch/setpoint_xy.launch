@@ -1,5 +1,4 @@
 <launch>
-
     <node 
         name="xy_controller_node"
         pkg="manipulator_controller_cpp" 
@@ -16,5 +15,4 @@
         respawn="true"
         output="screen">
     </node>
-
 </launch>

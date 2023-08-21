@@ -13,6 +13,7 @@
 
 //GRAVAR EM /ttyUSB1
 
+#include <Servo.h>
 
 //Biblioteca do ROS.
 #include <ros.h>
@@ -20,10 +21,12 @@
 #include <custom_msg/status_arm.h>
 #include <custom_msg/reset_COT.h>
 
+//#include <Arduino.h>
+
 //Definições para manipular os motores mais facilmente.
 #define PARAR               0
-#define HOR                 1
-#define ANTHOR              2
+#define HOR                +1
+#define ANTHOR             -1
 
 //Pinos de acionamento dos motores.
 #define PONTE_PUN_A         4
@@ -51,16 +54,16 @@
 
 //Constantes que definem quantos pulsos de encoder por grau de rotação cada motor possui.
 #define DEG2PUL_PUN         148
-//#define DEG2PUL_GAR         
+#define DEG2PUL_GAR         0
 
 //Constantes que representam o "zero" dos encoders, em graus. É a pose default do manipulador.
 #define DEFAULT_PUN         -133
-//#define DEFAULT_GAR         0
+#define DEFAULT_GAR         180
 
 //Constantes para os PID do PUNHO.
-#define kP_PUN              0.001
+#define kP_PUN              0.200
 #define kI_PUN              0.001
-#define kD_PUN              0.002
+#define kD_PUN              0.020
 
 //Constantes para os PID da GARRA.
 //#define kP_GAR              0.001
@@ -69,7 +72,7 @@
 
 //Limites do PWM.
 #define PWM_MAX             255
-#define PWM_MIN_PUN          60
+#define PWM_MIN_PUN         20
 //#define PWM_MIN_GAR         100
 
 //Variáveis de controle do PUNHO.
@@ -80,12 +83,19 @@ long erro_PUN =             0;
 long output_PUN =           0;
 long tolerance_PUN =        0;
 long soma_erro_PUN =        0;
+#pragma region Alteração
+long total_soma_erro_PUN =  0;
+unsigned iterations_PUN =   0;
+#pragma endregion
+int  iterations_PUN =       0;
 long last_erro_PUN =        0;
 long var_erro_PUN =         0;
 bool PID_enable_PUN =       true;
 bool reset_COT =            false;
 
 //Variáveis de controle da GARRA.
+
+Servo myservo;
 //long enc_GAR =              0;
 long setpoint_GAR =         0;
 long last_setpoint_GAR =    0;
@@ -164,8 +174,8 @@ void setup()
 
   //Pinos que mandam o PWM são saídas.
   pinMode(PIN_PWM_PUN, OUTPUT);
-  pinMode(PIN_PWM_GAR, OUTPUT);
-
+  //pinMode(PIN_PWM_GAR, OUTPUT);
+  myservo.attach(5); //
   //Pinos que habilitam o uso dos motores são saídas e devem estar com nível lógico alto.
   pinMode(EN_PUN, OUTPUT);
   pinMode(EN_GAR, OUTPUT);
@@ -204,7 +214,9 @@ void loop()
   pub_msg_PUN.pulsos_contados = enc_PUN;
   pub_msg_PUN.pulsos_erro = erro_PUN;
   pub_msg_PUN.output_P = kP_PUN*erro_PUN;
-  //pub_msg_PUN.output_I = implementar!;
+  #pragma region Alteração
+  pub_msg_PUN.output_I = kI_PUN*soma_erro_PUN;
+  #pragma endregion
   pub_msg_PUN.output_D = kD_PUN*var_erro_PUN;
   pub_msg_PUN.output_PID = output_PUN;
   pub_msg_PUN.loop_time = time_PID;
@@ -217,13 +229,13 @@ void loop()
   //pub_msg_GAR.pulsos_contados = enc_GAR;
   //pub_msg_GAR.pulsos_erro = erro_GAR;
   //pub_msg_GAR.output_P = kP_GAR*erro_GAR;
-  //pub_msg_GAR.output_I = output_GAR;
+  //pub_msg_GAR.output_I = kI_GAR*soma_erro_GAR;
   //pub_msg_GAR.output_D = kD_GAR*var_erro_GAR;
   //pub_msg_GAR.output_PID = output_GAR;
   //pub_GAR.publish(&pub_msg_GAR);
   //nh.spinOnce();
 
-  //Ececuta controle somente se o ROS está conectado e ao menos um dos PID está habilitado.
+  //Executa controle somente se o ROS está conectado e ao menos um dos PID está habilitado.
   if(nh.connected() && PID_enable_PUN){
     already_reset = false;
 
@@ -233,71 +245,75 @@ void loop()
     
     if(PID_enable_PUN){
     //Bloco de controle do PUNHO.
-        //Calcula as variáveis para o PID do PUNHO.
-        erro_PUN = enc_PUN - setpoint_PUN;
-        var_erro_PUN = (erro_PUN - last_erro_PUN) / time_PID;
-        last_erro_PUN = erro_PUN;
-
-        //Verifica se o PUNHO tem que acionar.
-        if (abs(erro_PUN) > tolerance_PUN){
-          pub_msg_PUN.IsDone = false;
-          pub_PUN.publish(&pub_msg_PUN);
-          
-          //Controla o reset do timeout de colisão, caso o PID esteja começando uma operação agora.
-          if (!working_PUN){
-            working_PUN = true;
-            start_PUN = millis();
-          }
-          
-          //Calcula o PWM do PUNHO.
-          if(abs(erro_PUN) > DEG2PUL_PUN*90){
-            //Se o erro for maior que 90 graus, aciona o PWM máximo.
-            output_PUN = PWM_MAX;
-          }else{
-            //Se o erro for menor que 90 graus, calcula o PID.
-            //output_PUN = min(abs(kP_PUN*erro_PUN + kI_PUN*soma_erro_PUN + kD_PUN*var_erro_PUN),PWM_MAX);
-            output_PUN = max(min(abs(kP_PUN*erro_PUN + kD_PUN*var_erro_PUN),PWM_MAX),PWM_MIN_PUN);
-            //output_PUN = min(abs(kP_PUN*erro_PUN),PWM_MAX);
-          }
-    
-          //Verifica para qual lado tem que girar. Se o output é positivo, gira no sentido horário.
-          if (erro_PUN > 0){
-            motorGo(MOTOR_PUN, HOR, output_PUN);
-          }else{
-            motorGo(MOTOR_PUN, ANTHOR, output_PUN);
-          }
-        }else{
-
-          //ESTA LINHA É UMA GAMBIARRA... SE TIRAR, O PUNHO FICA FORÇANDO. NÃO SABEMOS PORQUE.
-          //TEM OUTRA IGUAL LÁ NA FUNÇÃO DE RESET.
-          enc_PUN = setpoint_PUN;
-
-          
-          //Se dentro da tolerância, mantém parado e marca a flag de tarefa concluída.
-          motorGo(MOTOR_PUN, PARAR, 0);
-          output_PUN = 0;
-          working_PUN = false;
-          retries_PUN = 0;
-          pub_msg_PUN.IsDone = true;
-          pub_PUN.publish(&pub_msg_PUN);
+      //Calcula as variáveis para o PID do PUNHO.
+      erro_PUN = enc_PUN - setpoint_PUN;
+      var_erro_PUN = (erro_PUN - last_erro_PUN) / time_PID;
+      last_erro_PUN = erro_PUN;
+      #pragma region Alteração
+      soma_erro_PUN += erro_PUN;
+      iterations_PUN++;
+      total_soma_erro_PUN = soma_erro_PUN*time_PID/iterations_PUN;
+      #pragma endregion
+      //Verifica se o PUNHO tem que acionar.
+      if (abs(erro_PUN) > tolerance_PUN){
+        pub_msg_PUN.IsDone = false;
+        pub_PUN.publish(&pub_msg_PUN);
+        
+        //Controla o reset do timeout de colisão, caso o PID esteja começando uma operação agora.
+        if (!working_PUN){
+          working_PUN = true;
+          start_PUN = millis();
         }
         
-        //Acumula o tempo sem pulsos de encoder, caso o PID esteja executando alguma tarefa.
-        //Se estourar o tempo entre pulsos enquanto o PID está trabalhando, é porque o motor está forçando em algum obstáculo, então para e desativa o PID.
-        if(working_PUN){
-
-          pulse_timout_PUN = millis() - start_PUN;
-
-          if(pulse_timout_PUN >= time_to_stop){          
-             motorGo(MOTOR_PUN, PARAR, 0);
-             PID_enable_PUN = false;
-             lock_PUN = millis();
-             //nh.logwarn("PID desativado devido a uma colisão no PUNHO.");
-          }
+        //Calcula o PWM do PUNHO.
+        if(abs(erro_PUN) > DEG2PUL_PUN*90){
+          //Se o erro for maior que 90 graus, aciona o PWM máximo.
+          output_PUN = PWM_MAX;
+        }else{
+          //Se o erro for menor que 90 graus, calcula o PID.
+          //output_PUN = min(abs(kP_PUN*erro_PUN + kI_PUN*soma_erro_PUN + kD_PUN*var_erro_PUN),PWM_MAX);
+          //output_PUN = max(min(abs(kP_PUN*erro_PUN + kI_PUN*total_soma_erro_PUN + kD_PUN*var_erro_PUN),PWM_MAX),PWM_MIN_PUN);
+          #pragma region Alteração
+          output_PUN = max(min(abs(kP_PUN*erro_PUN + kI_PUN*total_soma_erro_PUN + kD_PUN*var_erro_PUN),PWM_MAX),PWM_MIN_PUN);
+          #pragma endregion
         }
+  
+        //Verifica para qual lado tem que girar. Se o output é positivo, gira no sentido horário.
+        if (erro_PUN > 0){
+          motorGo(MOTOR_PUN, HOR, output_PUN);
+        }else{
+          motorGo(MOTOR_PUN, ANTHOR, output_PUN);
+        }
+      }else{
+        //ESTA LINHA É UMA GAMBIARRA... SE TIRAR, O PUNHO FICA FORÇANDO. NÃO SABEMOS PORQUE.
+        //TEM OUTRA IGUAL LÁ NA FUNÇÃO DE RESET.
+        //enc_PUN = setpoint_PUN;
+        
+        //Se dentro da tolerância, mantém parado e marca a flag de tarefa concluída.
+        #pragma region Alteração (inversão de comentários)
+        motorGo(MOTOR_PUN, PARAR, 0);
+        //motorGo(MOTOR_PUN, ANTHOR, 25);
+        working_PUN = false;
+        retries_PUN = 0;
+        #pragma endregion
+        //output_PUN = 0;
+        pub_msg_PUN.IsDone = true;
+        pub_PUN.publish(&pub_msg_PUN);
+      }
+      //Acumula o tempo sem pulsos de encoder, caso o PID esteja executando alguma tarefa.
+      //Se estourar o tempo entre pulsos enquanto o PID está trabalhando, é porque o motor está forçando em algum obstáculo, então para e desativa o PID.
+      if(working_PUN){
+        pulse_timout_PUN = millis() - start_PUN;
+        if(pulse_timout_PUN >= time_to_stop){          
+          motorGo(MOTOR_PUN, PARAR, 0);
+          PID_enable_PUN = false;
+          lock_PUN = millis();
+          //nh.logwarn("PID desativado devido a uma colisão no PUNHO.");
+        }
+      }
     }
 
-
+    myservo.write(setpoint_GAR);
     //IMPLEMENTAR AQUI ROTINA PARA ABRIR OU FECHAR A GARRA!!!
 
     
@@ -345,7 +361,7 @@ void loop()
 //Função que trata a mensagem recebida, convertendo o ângulo recebido em contagem de pulsos.
 void Callback(const custom_msg::set_angles & rec_msg) {
   setpoint_PUN = (rec_msg.set_PUN - DEFAULT_PUN) * DEG2PUL_PUN;
-  setpoint_GAR = rec_msg.set_GAR;
+  setpoint_GAR = rec_msg.set_GAR ;
   EMERGENCY_STOP = rec_msg.emergency_stop;
   RESET = rec_msg.reset;
   RETRY = rec_msg.retry;
@@ -363,58 +379,46 @@ void Callback(const custom_msg::set_angles & rec_msg) {
 }
 
 void Callback_reset_COT(const custom_msg::reset_COT & rec_msg_reset_COT){
-  reset_COT = rec_msg_reset_COT.reset_COT;
+  reset_COT = rec_msg_reset_COT.reset_COT1;
 }
 
 //Função que comanda direção e velocidade dos motores.
 void motorGo(int motor, int dir, int pwm)
 {
-  switch (motor)
-  {
-    case MOTOR_PUN: {
-        switch (dir)
-        {
-          case HOR: {
-              digitalWrite(PONTE_PUN_A, HIGH);
-              digitalWrite(PONTE_PUN_B, LOW);
-              break;
-            }
-          case ANTHOR: {
-              digitalWrite(PONTE_PUN_A, LOW);
-              digitalWrite(PONTE_PUN_B, HIGH);
-              break;
-            }
-          case PARAR: {
-              digitalWrite(PONTE_PUN_A, LOW);
-              digitalWrite(PONTE_PUN_B, LOW);
-              break;
-            }
-        }
-        analogWrite(PIN_PWM_PUN, pwm);
-      }
-
-    case MOTOR_GAR: {
-        switch (dir)
-        {
-          case HOR: {
-              digitalWrite(PONTE_GAR_A, HIGH);
-              digitalWrite(PONTE_GAR_B, LOW);
-              break;
-            }
-          case ANTHOR: {
-              digitalWrite(PONTE_GAR_A, LOW);
-              digitalWrite(PONTE_GAR_B, HIGH);
-              break;
-            }
-          case PARAR: {
-              digitalWrite(PONTE_GAR_A, LOW);
-              digitalWrite(PONTE_GAR_B, LOW);
-              break;
-            }
-        }
-        analogWrite(PIN_PWM_GAR, pwm);
-      }
+  int ponte_A = 0;
+  int ponte_B = 0;
+  int state_A = 0;
+  int state_B = 0;
+  int pin_PWM = 0;
+  switch (motor){
+  case MOTOR_PUN:
+    ponte_A = PONTE_PUN_A;
+    ponte_B = PONTE_PUN_B;
+    analogWrite(PIN_PWM_PUN, pwm);
+  break;
+  case MOTOR_GAR:
+    ponte_A = PONTE_GAR_A;
+    ponte_B = PONTE_GAR_B;
+    analogWrite(PIN_PWM_GAR, pwm);
+  break;
   }
+  switch (dir){
+    case HOR: 
+      state_A = HIGH;
+      state_B = LOW;
+    break;
+    case ANTHOR:
+      state_A = LOW;
+      state_B = HIGH;
+    break;
+    case PARAR:
+      state_A = LOW;
+      state_B = LOW;
+    break;
+  }
+  analogWrite(pin_PWM, pwm);
+  digitalWrite(ponte_A, state_A);
+  digitalWrite(ponte_B, state_B);
 }
 
 //Interrupções dos encoders apenas ocorre na subida do canal A.
@@ -424,11 +428,7 @@ void CheckEncoder_PUN() {
   enc_PUN += digitalRead(ENC_PUN_B) == HIGH ? -1 : +1;
 
   //Contabiliza os pulsos para cada direção. Apenas zera o timeout de pulsos a cada "counter_max" pulsos em uma das direções.
-  if (digitalRead(ENC_PUN_B) == HIGH){
-    counter_PUN -= 1;
-  }else{
-    counter_PUN += 1;
-  }
+  counter_PUN += digitalRead(ENC_PUN_B) == HIGH ? -1 : +1;
      
   if(abs(counter_PUN) == counter_max){
     start_PUN = millis();
@@ -455,13 +455,16 @@ void reset_PUNGAR() {
     //Bloco para finalizar o RESET do PUNHO.
     pulse_timout_PUN = millis() - start_PUN;
     if(pulse_timout_PUN >= time_to_stop){
-      
       motorGo(MOTOR_PUN, PARAR, 0);
       
       enc_PUN =              0;
       erro_PUN =             0;
       output_PUN =           0;
       soma_erro_PUN =        0;
+      #pragma region Alteração
+      total_soma_erro_PUN =  0;
+      iterations_PUN =       0;
+      #pragma endregion
       last_erro_PUN =        0;
       var_erro_PUN =         0;
       counter_PUN =          0;
@@ -494,6 +497,9 @@ void retry_PUNGAR(){
   setpoint_GAR = last_setpoint_GAR;
   
   RETRY = false;
+
+  pub_msg_PUN.IsDone = false;
+  pub_PUN.publish(&pub_msg_PUN);
 
   //Somente sai da função de retry quando o COTOVELO informou que já resetou.
   while(!reset_COT){

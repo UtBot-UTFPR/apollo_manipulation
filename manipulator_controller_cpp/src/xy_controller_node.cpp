@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 					ROS_DEBUG("[xy controller] Nothing to do here.");
 					msg_cmd_vel.angular.z = 0.0;
 					pub_cmd_vel.publish(msg_cmd_vel);
-				}	
+				}
 			}
 		}
 	}
