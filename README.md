@@ -23,7 +23,7 @@ cd ..
 catkin_make
 ```
 
-### Running
+## Running
 
 See the usage explanation accessing each package in the repository or the overview below
 
